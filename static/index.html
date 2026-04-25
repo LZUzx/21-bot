@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>21岁的我</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f5;height:100vh;display:flex;justify-content:center;align-items:center}
+.container{width:100%;max-width:480px;height:100vh;max-height:800px;background:white;display:flex;flex-direction:column;box-shadow:0 0 20px rgba(0,0,0,0.1)}
+@media(max-width:480px){.container{max-height:none;height:100vh}}
+
+.header{background:#1a1a2e;color:white;padding:16px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.avatar{width:40px;height:40px;border-radius:50%;background:#e94560;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;flex-shrink:0}
+.h-info{flex:1}
+.h-name{font-size:16px;font-weight:600}
+.h-status{font-size:12px;color:#aaa;margin-top:2px}
+.h-status.on::before{content:'';display:inline-block;width:8px;height:8px;background:#4ade80;border-radius:50%;margin-right:6px}
+
+.login{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 30px;gap:24px}
+.l-av{width:80px;height:80px;border-radius:50%;background:#1a1a2e;display:flex;align-items:center;justify-content:center;font-size:36px;color:white;font-weight:bold}
+.l-t{font-size:22px;font-weight:600;color:#1a1a2e}
+.l-st{font-size:14px;color:#888;text-align:center;line-height:1.5}
+.l-in{width:100%;max-width:300px;padding:12px 16px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;outline:none;transition:border-color .2s}
+.l-in:focus{border-color:#1a1a2e}
+.l-btn{width:100%;max-width:300px;padding:12px;background:#1a1a2e;color:white;border:none;border-radius:12px;font-size:16px;cursor:pointer}
+.l-btn:hover{background:#16213e}
+.l-err{color:#e94560;font-size:14px;display:none}
+
+.chat{flex:1;display:none;flex-direction:column;overflow:hidden}
+.msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;background:#f8f9fa}
+.msg{max-width:85%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.5;word-break:break-word;white-space:pre-wrap}
+.msg.me{background:#1a1a2e;color:white;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.ai{background:white;color:#333;align-self:flex-start;border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.msg.sys{background:transparent;color:#999;font-size:13px;align-self:center;text-align:center}
+
+.inp{display:flex;gap:8px;padding:12px 16px;background:white;border-top:1px solid #eee;flex-shrink:0}
+.inp textarea{flex:1;padding:10px 14px;border:2px solid #e0e0e0;border-radius:20px;font-size:15px;outline:none;resize:none;font-family:inherit;max-height:100px;transition:border-color .2s}
+.inp textarea:focus{border-color:#1a1a2e}
+.snd{width:42px;height:42px;border-radius:50%;background:#1a1a2e;color:white;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;align-self:flex-end}
+.snd:hover{background:#16213e}
+.snd:disabled{background:#ccc;cursor:not-allowed}
+.snd svg{width:20px;height:20px}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="avatar">李</div>
+    <div class="h-info">
+      <div class="h-name">李卓星</div>
+      <div class="h-status on">在线 · 21岁 · 兰大→武大</div>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div class="login" id="login">
+    <div class="l-av">李</div>
+    <div class="l-t">21岁的我</div>
+    <div class="l-st">输入密码开始和"我"聊天吧</div>
+    <input class="l-in" id="pwd" type="password" placeholder="密码">
+    <div class="l-err" id="lerr">密码错误</div>
+    <button class="l-btn" id="lbtn">进入聊天</button>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat" id="chat">
+    <div class="msgs" id="msgs"></div>
+    <div class="inp">
+      <textarea id="inp" rows="1" placeholder="说点什么..." maxlength="500"></textarea>
+      <button class="snd" id="snd" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let sid = localStorage.getItem('bot_sid') || 's' + Date.now() + Math.random().toString(36).slice(2,8);
+localStorage.setItem('bot_sid', sid);
+let pwd = '', busy = false, botMsg = null;
+
+const $ = id => document.getElementById(id);
+const login = $('login'), chat = $('chat'), msgs = $('msgs');
+const pwdIn = $('pwd'), lerr = $('lerr'), lbtn = $('lbtn');
+const inp = $('inp'), snd = $('snd');
+
+inp.addEventListener('input', () => {
+  inp.style.height = 'auto';
+  inp.style.height = Math.min(inp.scrollHeight, 100) + 'px';
+});
+
+lbtn.onclick = loginGo;
+pwdIn.onkeydown = e => { if(e.key==='Enter') loginGo(); };
+
+async function loginGo() {
+  const v = pwdIn.value.trim();
+  if(!v) return;
+  try {
+    let r = await fetch('/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:'ping', password:v, session_id: sid+'_t'})
+    });
+    if(r.status===403) throw Error('bad');
+    if(!r.ok) throw Error('fail');
+    pwd = v;
+    login.style.display = 'none';
+    chat.style.display = 'flex';
+    addSys('可以开始聊天了');
+    inp.focus();
+  } catch(e) {
+    lerr.style.display = 'block';
+    setTimeout(()=>lerr.style.display='none', 3000);
+  }
+}
+
+function addMsg(t, role) {
+  let d = document.createElement('div');
+  d.className = 'msg ' + role;
+  d.textContent = t;
+  msgs.appendChild(d);
+  sc();
+  return d;
+}
+function addSys(t) {
+  let d = document.createElement('div');
+  d.className = 'msg sys';
+  d.textContent = t;
+  msgs.appendChild(d);
+  sc();
+}
+function sc() { setTimeout(()=>msgs.scrollTop=msgs.scrollHeight, 50); }
+
+async function send() {
+  let t = inp.value.trim();
+  if(!t || busy) return;
+
+  addMsg(t, 'me');
+  inp.value = '';
+  inp.style.height = 'auto';
+  inp.disabled = true;
+  snd.disabled = true;
+  busy = true;
+  botMsg = null;
+
+  try {
+    let r = await fetch('/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message: t, password: pwd, session_id: sid})
+    });
+    if(!r.ok) throw Error('http');
+    let reader = r.body.getReader();
+    let dec = new TextDecoder();
+    let buf = '';
+
+    while(true) {
+      let {done, value} = await reader.read();
+      if(done) break;
+      buf += dec.decode(value, {stream: true});
+      let lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for(let l of lines) {
+        if(!l.startsWith('data: ')) continue;
+        try {
+          let d = JSON.parse(l.slice(6));
+          if(d.d) {
+            busy = false;
+            inp.disabled = false;
+            snd.disabled = false;
+            inp.focus();
+            continue;
+          }
+          if(d.t) {
+            if(!botMsg) botMsg = addMsg('', 'ai');
+            botMsg.textContent += d.t;
+            sc();
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {
+    addSys('连接出错，请重试');
+  }
+  if(!botMsg) { addMsg('（暂无回复）', 'ai'); }
+  busy = false;
+  inp.disabled = false;
+  snd.disabled = false;
+  inp.focus();
+}
+
+snd.onclick = send;
+inp.onkeydown = e => {
+  if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+};
+addSys('输入密码后开始对话');
+</script>
+</body>
+</html>
