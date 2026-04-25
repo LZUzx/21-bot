@@ -17,7 +17,7 @@ app.add_middleware(
 )
 
 PASSWORD = os.environ.get("BOT_PASSWORD", "123456")
-MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-chat")
+MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
 client = None
 

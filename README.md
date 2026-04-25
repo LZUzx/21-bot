@@ -21,7 +21,7 @@ DeepSeek API 极其便宜，50元/月预算完全够用：
 
 | 模型 | 输入价格 | 输出价格 | 约可聊条数/月 |
 |------|---------|---------|-------------|
-| deepseek-chat (V3) | ¥2/1M tokens | ¥8/1M tokens | ~12,000 条 |
+| deepseek-v4-flash | ¥?/1M tokens | ¥?/1M tokens | ~充足 |
 
 ## 部署到 Railway（推荐，免费）
 
